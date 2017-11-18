@@ -1,0 +1,100 @@
+<html>
+	<head>
+		<title>Neural Networks</title>
+		<!--Import Google Icon Font-->
+	    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+	    <!--Import materialize.css-->
+	    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css">
+
+	    <!--Let browser know website is optimized for mobile-->
+	    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+	</head>
+	<body>
+		<div class='container'>
+		 <div class="row" style='margin-top: 5%'>
+		 	<h4 align='center'>Proyecto Tratamiento de la Información, Otoño 2017</h4>
+		 </div>
+		 <div class="row">
+		    <form class="col s12">
+		      <div class="row">
+		        <div class="input-field col s6">
+		          <input id="kvalue" type="number" class="validate">
+		          <label for="kvalue">Valor de K</label>
+		        </div>
+		        <div class="input-field col s6">
+		          <input id="capas" type="text" class="validate">
+		          <label for="capas">Capas (Separados por Coma)</label>
+		        </div>
+		      </div>
+		      <div class="row">
+		        <div class="input-field col s6">
+		          <input id="tasa" type="number" class="validate">
+		          <label for="tasa">Tasa de Aprendizaje</label>
+		        </div>
+		        <div class="input-field col s6">
+		          <input id="momentum" type="number" class="validate">
+		          <label for="momentum">Momentum</label>
+		        </div>
+		      </div>
+		      <div class="row">
+		        <div class="input-field col s6">
+		          <input id="epocas" type="number" class="validate">
+		          <label for="epocas">Número de Épocas</label>
+		        </div>
+		        <div class="input-field col s6">
+		          	<select id='funcion'>
+				      <option value="" disabled selected>Función de Activación</option>
+				      <option value="relu">Escalón</option>
+				      <option value="identity">Identidad</option>
+				      <option value="logistic">Logistíca</option>
+				      <option value="tanh">Tangencial</option>
+				    </select>
+				    <label>Función de Activación</label>
+		        </div>
+		      </div>
+		      <div class='row'>
+		    	<div class="file-field input-field">
+			      <div class="btn">
+			        <span>Archivo de Especificaciones</span>
+			        <input type="file" accept='.txt' id='file'>
+			      </div>
+			      <div class="file-path-wrapper">
+			        <input class="file-path validate" type="text">
+			      </div>
+			    </div>
+		      </div>
+		    </form>
+		    <div class='row'>
+		    	<div class="col s12">
+			      	 <button style='width:100%' id='train' class="btn waves-effect waves-light">Entrenar
+					    <i class="material-icons right">send</i>
+					  </button>
+				</div>
+		    </div>
+		  </div>
+		</div>
+
+		<!--Import jQuery before materialize.js-->
+	    <script type="text/javascript" src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+	    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/js/materialize.min.js"></script>
+		<script type="text/javascript">
+			$(document).ready(function(){
+				$('select').material_select();
+				$('#train').click(function(){
+					$.post( "http://localhost:8000/api/train/backpropagation", {'funcion': $('#funcion').val(), 
+						'epocas': $('#epocas').val(),
+						'tasa': $('#tasa').val(),
+						'momentum': $('#momentum').val(),
+						'kvalue': $('#kvalue').val(),
+						'capas': $('#capas').val(),
+						'file': '/home/xchel/Documentos/BUAP/TratamientoInf/Proyecto/'+document.getElementById('file').files[0].name
+					})
+					  .done(function( data ) {
+					    console.log(data)
+					});
+				});
+			});
+		</script>
+
+	</body>
+</html>
