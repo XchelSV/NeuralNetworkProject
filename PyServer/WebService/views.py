@@ -10,6 +10,8 @@ from django.http import JsonResponse
 from django.core import serializers
 
 import json
+import random
+import math   # This will import math module
 import Orange
 
 @csrf_exempt
@@ -102,19 +104,63 @@ def backPropagation_view(request):
 	data.shuffle()
 
 	nn = Orange.classification.NNClassificationLearner(hidden_layer_sizes=(layers), activation=func_act, learning_rate_init=learning_rate, max_iter=epoch, momentum=momentum)
+	
+	#CrossValidation Fold by fold
+	normalize_end_file = open('/home/xchel/Documentos/orange3/Orange/datasets/normalize_test_data.tab', "r")
+	line1 = normalize_end_file.readline()
+	line2 = normalize_end_file.readline()
+	line3 = normalize_end_file.readline()
+	len_file = len(normalize_end_file.readlines())
+	normalize_end_file.close()
+	
+	normalize_end_file = open('/home/xchel/Documentos/orange3/Orange/datasets/normalize_test_data.tab', "r")	
+	line1 = normalize_end_file.readline()
+	line2 = normalize_end_file.readline()
+	line3 = normalize_end_file.readline()
+
+	len_datasets = math.ceil(len_file/k_folds)
+	lines_arr = normalize_end_file.readlines()
+	random.shuffle(lines_arr)
+	index_limits = []
+	folds_results = []
+
+	for i in range(k_folds):
+		index_limits.append( (i*len_datasets)+(len_datasets-1) )
+	
+	for i in range(k_folds):
+		train_fold_data = open('/home/xchel/Documentos/orange3/Orange/datasets/train_fold_data.tab', "w")
+		test_fold_data = open('/home/xchel/Documentos/orange3/Orange/datasets/test_fold_data.tab', "w")
+		train_fold_data.write(line1)
+		train_fold_data.write(line2)
+		train_fold_data.write(line3)
+		test_fold_data.write(line1)
+		test_fold_data.write(line2)
+		test_fold_data.write(line3)
+		for j in range(len_file):
+			if j >= (i*len_datasets) and j <= index_limits[i]:
+				test_fold_data.write(lines_arr[j])
+			else:
+				train_fold_data.write(lines_arr[j])		
+		train_fold_data.close()
+		test_fold_data.close()
+
+		train_data = Orange.data.Table("train_fold_data")
+		test_data = Orange.data.Table("test_fold_data")
+		folds_results.append( Orange.evaluation.scoring.CA(Orange.evaluation.testing.TestOnTestData(train_data, test_data, [nn]))[0] )
+	
+	normalize_end_file.close()
+	#End Cross Validation Fold by Fold
+
+	#Global CrossValidation
 	res = Orange.evaluation.CrossValidation(data, [nn], k=k_folds)
 	# sgd, lbfgs, Adam
 	# relu , identity, logistic, tanh
-
 	z = [(round(Orange.evaluation.scoring.AUC(res)[0],3)),(round(Orange.evaluation.scoring.CA(res)[0],3)),(round(Orange.evaluation.scoring.F1(res,average="weighted")[0],3)),(round(Orange.evaluation.scoring.Precision(res,average="weighted")[0],3)),(round(Orange.evaluation.scoring.Recall(res,average="weighted")[0],3))]
 
-	print(z)
+	print(folds_results)
+	print(z[1])
 	
 	response_data = {}
-	response_data['AUC']= z[0]
 	response_data['CA']= z[1]
-	response_data['F1']= z[2]
-	response_data['Precision']= z[3]
-	response_data['Recall']= z[4]
 
 	return HttpResponse(JsonResponse(response_data), content_type='application/json')
