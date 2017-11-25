@@ -44,7 +44,7 @@
 		        <div class="input-field col s6">
 		          	<select id='funcion'>
 				      <option value="" disabled selected>Función de Activación</option>
-				      <option value="relu">Escalón</option>
+				      <option value="relu">ReLU</option>
 				      <option value="identity">Identidad</option>
 				      <option value="logistic">Logistíca</option>
 				      <option value="tanh">Tangencial</option>
@@ -74,13 +74,57 @@
 		  </div>
 		</div>
 
+		 <!-- Modal Loader -->
+		  <div id="modalLoader" class="modal">
+		    <div class="modal-content">
+		    	<div class='row' style='margin-top: 5%; margin-bottom:5%;padding-left: 7%'>
+		    		<div class='col s1 offset-s5'>
+		    			<div class="preloader-wrapper big active">
+						    <div class="spinner-layer spinner-blue-only">
+						      <div class="circle-clipper left">
+						        <div class="circle"></div>
+						      </div><div class="gap-patch">
+						        <div class="circle"></div>
+						      </div><div class="circle-clipper right">
+						        <div class="circle"></div>
+						      </div>
+						    </div>
+						  </div>
+		    		</div>
+		    	</div>
+		    </div>
+		  </div>
+
+		   <!-- Modal Results -->
+		  <div id="modalResults" class="modal modal-fixed-footer">
+		    <div class="modal-content">
+		      <h4 class='center-align'>Exactitud de la Red</h4>
+		      <table id='r_table' class='striped centered'>
+		        <thead>
+		          
+		        </thead>
+
+		        <tbody>
+		          
+		        </tbody>
+		      </table>
+		    </div>
+		    <div class="modal-footer">
+		      <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat ">Cerrar</a>
+		    </div>
+		  </div>
+
+
 		<!--Import jQuery before materialize.js-->
 	    <script type="text/javascript" src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
 	    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/js/materialize.min.js"></script>
 		<script type="text/javascript">
 			$(document).ready(function(){
+				$('.modal').modal();
 				$('select').material_select();
 				$('#train').click(function(){
+					$("#r_table tr").remove();
+					$('#modalLoader').modal('open');
 					$.post( "http://localhost:8000/api/train/backpropagation", {'funcion': $('#funcion').val(), 
 						'epocas': $('#epocas').val(),
 						'tasa': $('#tasa').val(),
@@ -90,7 +134,18 @@
 						'file': '/home/xchel/Documentos/BUAP/TratamientoInf/Proyecto/'+document.getElementById('file').files[0].name
 					})
 					  .done(function( data ) {
-					    console.log(data)
+					  	$('#modalLoader').modal('close');
+					  	$('#modalResults').modal('open');
+					  	//$('#global_ac').text(data.CA);
+					  	var col_text = '<td>Validación Global</td>';
+					  	var col_text_2 = '<td>'+100*data.CA+'% </td>'
+					  	for (var i = 0; i < data.folds.length ; i++) {
+					  		col_text = col_text + '<td> Iteración '+ (i+1) +'</td>'
+					  		col_text_2 = col_text_2 + '<td>'+100*data.folds[i]+'% </td>'
+					  	}
+					  	$('#r_table thead').append('<tr>'+col_text+'</tr>')
+					  	$('#r_table tbody').append('<tr>'+col_text_2+'</tr>')
+					    //console.log(data)
 					});
 				});
 			});
