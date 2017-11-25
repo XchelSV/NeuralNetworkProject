@@ -63,20 +63,24 @@ def backPropagation_view(request):
 	line1 = normalize_file.readline()
 	line2 = normalize_file.readline()
 	line3 = normalize_file.readline()
-	min_num = 0
-	max_num = 0
+	min_num = []
+	max_num = []
 	for idy,line in enumerate(normalize_file):
 		temp_line = [ x.strip() for x in line.split('\t')]
 		for idx,num in enumerate(temp_line):
-			if idy == 0 and idx == 0:
-				min_num = float(num)
-				max_num = float(num)
+			
 			if idx < len(temp_line)-1:
-				if float(num)>max_num:
-					max_num = float(num)
-				if float(num)<min_num:
-					min_num = float(num)
+				if idy == 0:
+					min_num.append(float(num))
+					max_num.append(float(num))
+
+				if float(num)> max_num[idx]:
+					max_num[idx] = float(num)
+				if float(num)<min_num[idx] :
+					min_num[idx] = float(num)
 	normalize_file.close()
+	#print(min_num)
+	#print(max_num)
 
 	normalize_file = open('/home/xchel/Documentos/orange3/Orange/datasets/test_data.tab', "r")
 	normalize_end_file = open('/home/xchel/Documentos/orange3/Orange/datasets/normalize_test_data.tab', "w")
@@ -93,7 +97,7 @@ def backPropagation_view(request):
 			if idx == len(temp_line)-1:
 				temp_new_line = temp_new_line+num+'\n'
 			else:
-				temp_new_line = temp_new_line+str(float( (float(num)-min_num)/(max_num-min_num) ))+'\t'
+				temp_new_line = temp_new_line+str(float( (float(num)-min_num[idx])/(max_num[idx]-min_num[idx]) ))+'\t'
 		normalize_end_file.write(temp_new_line)
 
 	normalize_end_file.close()
@@ -146,7 +150,7 @@ def backPropagation_view(request):
 
 		train_data = Orange.data.Table("train_fold_data")
 		test_data = Orange.data.Table("test_fold_data")
-		folds_results.append( Orange.evaluation.scoring.CA(Orange.evaluation.testing.TestOnTestData(train_data, test_data, [nn]))[0] )
+		folds_results.append( round(Orange.evaluation.scoring.CA(Orange.evaluation.testing.TestOnTestData(train_data, test_data, [nn]))[0], 3 ))
 	
 	normalize_end_file.close()
 	#End Cross Validation Fold by Fold
@@ -156,11 +160,9 @@ def backPropagation_view(request):
 	# sgd, lbfgs, Adam
 	# relu , identity, logistic, tanh
 	z = [(round(Orange.evaluation.scoring.AUC(res)[0],3)),(round(Orange.evaluation.scoring.CA(res)[0],3)),(round(Orange.evaluation.scoring.F1(res,average="weighted")[0],3)),(round(Orange.evaluation.scoring.Precision(res,average="weighted")[0],3)),(round(Orange.evaluation.scoring.Recall(res,average="weighted")[0],3))]
-
-	print(folds_results)
-	print(z[1])
 	
 	response_data = {}
 	response_data['CA']= z[1]
+	response_data['folds'] = folds_results
 
 	return HttpResponse(JsonResponse(response_data), content_type='application/json')
